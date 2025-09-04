@@ -47,13 +47,13 @@ https://oauth-redirect.dev.coda.to/?state={"redirect_uri":"https%3A//app.staging
 
 ```bash
 # Development
-pnpm dev
+pnpm run dev
 
 # Deploy to production
-pnpm deploy
+pnpm run deploy
 
 # Run tests
-pnpm test
+pnpm run test
 ```
 
 ## Configuration

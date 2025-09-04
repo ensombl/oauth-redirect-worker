@@ -15,6 +15,10 @@
 		{
 			"pattern": "oauth-redirect.dev.coda.to/*",
 			"zone_id": "0ac8df74a3beed8fd311cc39e5ac825b"
+		},
+		{
+			"pattern": "oauth-redirect.coda.to/*",
+			"zone_id": "0ac8df74a3beed8fd311cc39e5ac825b"
 		}
 	],
 	/**
