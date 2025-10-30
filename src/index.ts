@@ -124,13 +124,15 @@ export default {
 
     // Apply different validation rules based on the route
     if (isProductionOAuthRedirectRoute) {
-      // Strict validation for oauth-redirect.coda.to: only allow https://app.coda.to
-      if (
-        target.protocol !== "https:" ||
-        target.hostname.match("app.coda.to")
-      ) {
+      // Strict validation for oauth-redirect.coda.to: only allow production Coda domains
+      const isProductionDomain =
+        target.hostname === "app.coda.to" ||
+        target.hostname === "app.preview.coda.to" ||
+        target.hostname === "preview.coda.to";
+
+      if (target.protocol !== "https:" || !isProductionDomain) {
         return new Response(
-          "oauth-redirect.coda.to only allows redirects to https://app.coda.to",
+          "oauth-redirect.coda.to only allows redirects to https://app.coda.to, https://app.preview.coda.to, or https://preview.coda.to",
           { status: 403 }
         );
       }
