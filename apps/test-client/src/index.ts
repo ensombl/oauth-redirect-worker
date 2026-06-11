@@ -290,7 +290,7 @@ function renderPage(options: {
     </div>
     <section class="launch">
       <a class="${loginClass}" href="${escapeHtml(loginHref)}" aria-disabled="${!provider?.enabled}">
-        <span>Start local OAuth login</span>
+        <span>Start OAuth login</span>
         <small>${escapeHtml(providerName)} - ${escapeHtml(loginState)}</small>
       </a>
     </section>
@@ -303,7 +303,7 @@ function renderPage(options: {
         </div>
         <div class="connector">-&gt;</div>
         <div class="flow-node">
-          <div class="node-label"><span>OAuth Test Server</span><span class="badge">authorize</span></div>
+          <div class="node-label"><span>OAuth Provider</span><span class="badge">authorize</span></div>
           <code class="endpoint">${escapeHtml(provider?.authorizationEndpoint ?? "not configured")}</code>
         </div>
         <div class="connector">-&gt;</div>

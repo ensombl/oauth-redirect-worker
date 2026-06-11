@@ -26,21 +26,128 @@ export type TokenResponse = {
 
 export type FetchLike = typeof fetch;
 
-export function loadProviderRuntimeConfigs(
-  config: AuthConfig
-): ProviderRuntimeConfig[] {
-  return Object.entries(config.providers).map(([id, provider]) => {
-    const clientId = provider.clientId ?? "";
-    const clientSecret = provider.clientSecret ?? "";
+type ProviderRuntimeEnv = Record<string, string | undefined>;
 
-    return {
-      id,
-      ...provider,
-      clientId,
-      clientSecret,
-      enabled: clientId.length > 0 && clientSecret.length > 0,
-    };
-  });
+const providerPresets: Record<
+  string,
+  Pick<
+    OAuthProviderConfig,
+    | "displayName"
+    | "authorizationEndpoint"
+    | "tokenEndpoint"
+    | "userInfoEndpoint"
+    | "scopes"
+  >
+> = {
+  google: {
+    displayName: "Google",
+    authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+    tokenEndpoint: "https://oauth2.googleapis.com/token",
+    userInfoEndpoint: "https://openidconnect.googleapis.com/v1/userinfo",
+    scopes: ["openid", "email", "profile"],
+  },
+};
+
+const providerEnvKeys = [
+  "OAUTH_PROVIDER_ID",
+  "OAUTH_PROVIDER_NAME",
+  "OAUTH_CLIENT_ID",
+  "OAUTH_CLIENT_SECRET",
+  "OAUTH_AUTHORIZATION_ENDPOINT",
+  "OAUTH_TOKEN_ENDPOINT",
+  "OAUTH_USERINFO_ENDPOINT",
+  "OAUTH_SCOPES",
+] as const;
+
+function envValue(env: ProviderRuntimeEnv, key: string): string | undefined {
+  const value = env[key]?.trim();
+  return value && value.length > 0 ? value : undefined;
+}
+
+function envScopes(env: ProviderRuntimeEnv): string[] | undefined {
+  const value = envValue(env, "OAUTH_SCOPES");
+  if (!value) return undefined;
+
+  const scopes = value
+    .split(/[,\s]+/)
+    .map((scope) => scope.trim())
+    .filter((scope) => scope.length > 0);
+
+  return scopes.length > 0 ? scopes : undefined;
+}
+
+function hasProviderEnvOverrides(env: ProviderRuntimeEnv): boolean {
+  return providerEnvKeys.some((key) => Boolean(envValue(env, key)));
+}
+
+function toRuntimeProvider(
+  id: string,
+  provider: OAuthProviderConfig
+): ProviderRuntimeConfig {
+  const clientId = provider.clientId ?? "";
+  const clientSecret = provider.clientSecret ?? "";
+
+  return {
+    id,
+    ...provider,
+    clientId,
+    clientSecret,
+    enabled:
+      clientId.length > 0 &&
+      clientSecret.length > 0 &&
+      provider.authorizationEndpoint.length > 0 &&
+      provider.tokenEndpoint.length > 0,
+  };
+}
+
+export function loadProviderRuntimeConfigs(
+  config: AuthConfig,
+  env: ProviderRuntimeEnv = process.env
+): ProviderRuntimeConfig[] {
+  const configuredProviders = Object.entries(config.providers);
+  if (!hasProviderEnvOverrides(env)) {
+    return configuredProviders.map(([id, provider]) =>
+      toRuntimeProvider(id, provider)
+    );
+  }
+
+  const requestedProviderId = envValue(env, "OAUTH_PROVIDER_ID");
+  const providerId = requestedProviderId ?? configuredProviders[0]?.[0] ?? "oauth";
+  const baseProvider = requestedProviderId
+    ? config.providers[providerId]
+    : configuredProviders[0]?.[1];
+  const preset = providerPresets[providerId.toLowerCase()];
+  const clientId = envValue(env, "OAUTH_CLIENT_ID") ?? baseProvider?.clientId;
+  const clientSecret =
+    envValue(env, "OAUTH_CLIENT_SECRET") ?? baseProvider?.clientSecret;
+  const userInfoEndpoint =
+    envValue(env, "OAUTH_USERINFO_ENDPOINT") ??
+    preset?.userInfoEndpoint ??
+    baseProvider?.userInfoEndpoint;
+
+  const provider: OAuthProviderConfig = {
+    displayName:
+      envValue(env, "OAUTH_PROVIDER_NAME") ??
+      preset?.displayName ??
+      baseProvider?.displayName ??
+      providerId,
+    authorizationEndpoint:
+      envValue(env, "OAUTH_AUTHORIZATION_ENDPOINT") ??
+      preset?.authorizationEndpoint ??
+      baseProvider?.authorizationEndpoint ??
+      "",
+    tokenEndpoint:
+      envValue(env, "OAUTH_TOKEN_ENDPOINT") ??
+      preset?.tokenEndpoint ??
+      baseProvider?.tokenEndpoint ??
+      "",
+    scopes: envScopes(env) ?? preset?.scopes ?? baseProvider?.scopes ?? ["openid"],
+    ...(clientId ? { clientId } : {}),
+    ...(clientSecret ? { clientSecret } : {}),
+    ...(userInfoEndpoint ? { userInfoEndpoint } : {}),
+  };
+
+  return [toRuntimeProvider(providerId, provider)];
 }
 
 export function buildTargetRedirectUri(

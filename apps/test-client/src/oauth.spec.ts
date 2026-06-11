@@ -87,6 +87,61 @@ describe("oauth test client helpers", () => {
     });
   });
 
+  it("applies OAuth client env overrides to the default provider", () => {
+    const providers = loadProviderRuntimeConfigs(authConfig, {
+      OAUTH_CLIENT_ID: "env-client",
+      OAUTH_CLIENT_SECRET: "env-secret",
+      OAUTH_SCOPES: "openid,email,profile",
+    });
+
+    expect(providers).toHaveLength(1);
+    expect(providers[0]).toMatchObject({
+      id: "test",
+      displayName: "Local OAuth Test Server",
+      clientId: "env-client",
+      clientSecret: "env-secret",
+      scopes: ["openid", "email", "profile"],
+      enabled: true,
+    });
+  });
+
+  it("supports a Google OAuth provider from env", () => {
+    const providers = loadProviderRuntimeConfigs(authConfig, {
+      OAUTH_PROVIDER_ID: "google",
+      OAUTH_CLIENT_ID: "google-client",
+      OAUTH_CLIENT_SECRET: "google-secret",
+    });
+
+    expect(providers).toEqual([
+      expect.objectContaining({
+        id: "google",
+        displayName: "Google",
+        clientId: "google-client",
+        clientSecret: "google-secret",
+        authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+        tokenEndpoint: "https://oauth2.googleapis.com/token",
+        userInfoEndpoint: "https://openidconnect.googleapis.com/v1/userinfo",
+        scopes: ["openid", "email", "profile"],
+        enabled: true,
+      }),
+    ]);
+  });
+
+  it("does not inherit mock endpoints for unknown env provider ids", () => {
+    const providers = loadProviderRuntimeConfigs(authConfig, {
+      OAUTH_PROVIDER_ID: "custom",
+      OAUTH_CLIENT_ID: "custom-client",
+      OAUTH_CLIENT_SECRET: "custom-secret",
+    });
+
+    expect(providers[0]).toMatchObject({
+      id: "custom",
+      authorizationEndpoint: "",
+      tokenEndpoint: "",
+      enabled: false,
+    });
+  });
+
   it("builds worker and target redirect URIs", () => {
     expect(buildTargetRedirectUri("http://localhost:3000", "test")).toBe(
       "http://localhost:3000/callback/test"

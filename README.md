@@ -29,6 +29,8 @@ Configured target hosts:
 
 Wrangler config is generated from `config/auth.config.jsonc` into `apps/oauth-redirect-worker/.generated/wrangler.jsonc`. There is one Worker target: `oauth-redirect.dev.ensombl.io`. The `dev` label is part of the workflow hostname, not a separate Worker environment.
 
+The Cloudflare account id is pinned in `config/auth.config.jsonc` so `pnpm deploy` can run non-interactively against the `ensombl` account.
+
 Worker package scripts run Wrangler with `CI=1` scoped to the Wrangler process. Wrangler `4.99.0` prompts interactive terminals to install Cloudflare agent skills before starting `wrangler dev`, and it does not expose a no-install flag; the scoped CI env keeps local and Turbo startup non-blocking while still using the latest Wrangler.
 
 `pnpm dev` also generates local Wrangler config with `AUTH_REDIRECT_ALLOW_INSECURE_CALLBACKS=true` so `http://localhost:8787` callbacks work. `pnpm build` and `pnpm --filter @ensombl/oauth-redirect-worker deploy` regenerate config without that var, so production still requires HTTPS callback traffic.
@@ -65,6 +67,17 @@ Demo URLs:
 - Redirect Worker: `http://localhost:8787`
 
 Open `http://localhost:3000` and sign in with the local OAuth test server.
+
+The test client can point at another OAuth provider from `.env` without changing `config/auth.config.jsonc`. For Google, register `http://localhost:8787/callback/google` as an authorized redirect URI, then set:
+
+```sh
+OAUTH_PROVIDER_ID=google
+OAUTH_CLIENT_ID=your-google-client-id
+OAUTH_CLIENT_SECRET=your-google-client-secret
+OAUTH_SCOPES=openid,email,profile
+```
+
+For another provider, also set `OAUTH_PROVIDER_NAME`, `OAUTH_AUTHORIZATION_ENDPOINT`, `OAUTH_TOKEN_ENDPOINT`, and optionally `OAUTH_USERINFO_ENDPOINT`.
 
 To test post-login navigation, start at a relative `return_to` path:
 
