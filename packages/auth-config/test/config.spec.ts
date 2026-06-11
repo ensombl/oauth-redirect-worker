@@ -21,7 +21,7 @@ import {
 
 const baseConfig: AuthConfig = AuthConfigSchema.parse({
   worker: {
-    name: "oauth-redirect",
+    name: "ensombl-oauth-redirect-worker",
     compatibilityDate: "2025-06-17",
     observability: true,
     hostnames: ["oauth-redirect.dev.ensombl.io"],
@@ -103,7 +103,7 @@ describe("auth config", () => {
     const wrangler = createWranglerConfig(baseConfig);
 
     expect(wrangler).toMatchObject({
-      name: "oauth-redirect",
+      name: "ensombl-oauth-redirect-worker",
       main: "../src/index.ts",
       compatibility_date: "2025-06-17",
       routes: [
@@ -156,7 +156,7 @@ describe("auth config", () => {
         `{
           // comments and trailing commas are allowed
           "worker": {
-            "name": "oauth-redirect",
+            "name": "ensombl-oauth-redirect-worker",
             "compatibilityDate": "2025-06-17",
             "hostnames": ["oauth-redirect.dev.ensombl.io"],
           },

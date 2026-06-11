@@ -17,7 +17,7 @@ import {
 
 const authConfig: AuthConfig = {
   worker: {
-    name: "oauth-redirect",
+    name: "ensombl-oauth-redirect-worker",
     compatibilityDate: "2025-06-17",
     observability: true,
     hostnames: ["oauth-redirect.dev.ensombl.io"],

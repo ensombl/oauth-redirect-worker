@@ -20,7 +20,7 @@
   "devDependencies": {
     "@vitest/coverage-istanbul": "4.1.8",
     "concurrently": "^10.0.3",
-    "turbo": "^2.9.17",
+    "turbo": "^2.9.18",
     "typescript": "^6.0.3"
   }
 }

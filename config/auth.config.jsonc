@@ -1,6 +1,6 @@
 {
   "worker": {
-    "name": "oauth-redirect",
+    "name": "ensombl-oauth-redirect-worker",
     "accountId": "c17660581ac56ebe0a26fb254c0d5c33",
     "compatibilityDate": "2025-06-17",
     "observability": true,

@@ -27,7 +27,7 @@ Configured target hosts:
 - `*.ensombl.io`
 - `*.certless.io`
 
-Wrangler config is generated from `config/auth.config.jsonc` into `apps/oauth-redirect-worker/.generated/wrangler.jsonc`. There is one Worker target: `oauth-redirect.dev.ensombl.io`. The `dev` label is part of the workflow hostname, not a separate Worker environment.
+Wrangler config is generated from `config/auth.config.jsonc` into `apps/oauth-redirect-worker/.generated/wrangler.jsonc`. There is one Worker target: `ensombl-oauth-redirect-worker` on the custom domain `oauth-redirect.dev.ensombl.io`. The `dev` label is part of the workflow hostname, not a separate Worker environment.
 
 The Cloudflare account id is pinned in `config/auth.config.jsonc` so `pnpm deploy` can run non-interactively against the `ensombl` account.
 
