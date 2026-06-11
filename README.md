@@ -1,80 +1,91 @@
-# External Auth Worker
+# OAuth Redirect
 
-A Cloudflare Worker that provides secure OAuth redirect handling for Coda applications.
+Turborepo for the Ensombl OAuth redirect Worker, a local OAuth test server, and a small local OAuth test client.
 
-## Overview
+## Workspace
 
-This worker acts as a secure OAuth redirect endpoint that validates and forwards authentication responses to authorized domains. It's designed to protect against open redirect vulnerabilities by maintaining an allowlist of trusted redirect targets.
+- `apps/oauth-redirect-worker`: Cloudflare Worker that validates OAuth callback redirect targets and forwards allowed OAuth parameters.
+- `apps/test-server`: local OAuth provider used by the demo.
+- `apps/test-client`: local Node test client configured for the local OAuth provider.
+- `packages/auth-config`: shared config schema, redirect host matching, and Wrangler config generation.
+- `config/auth.config.jsonc`: source of truth for Worker routing, redirect allowlist, callback params, and provider metadata.
 
-## Functionality
+## Worker
 
-- **Secure Redirects**: Validates redirect URIs against an allowlist of trusted domains
-- **Parameter Forwarding**: Preserves all query parameters when redirecting to the target URL
-- **State Parameter Parsing**: Extracts redirect URI from the `state` parameter (expected as JSON)
+The Worker expects OAuth providers to call it with a JSON `state` parameter containing `redirect_uri`:
 
-## Allowed Redirect Domains
-
-The worker only allows redirects to the following domains:
-
-- `localhost` (any port)
-- `127.*` (local IP addresses)
-- `app.staging.coda.to`
-- `preview.app.coda.to`
-- `*.vercel.app`
-
-## Usage
-
-### URL Format
-
-```
-https://oauth-redirect.dev.coda.to/?state={"redirect_uri":"<encoded_target_url>"}&<other_oauth_params>
+```txt
+https://oauth-redirect.dev.ensombl.io/callback/test?state={"redirect_uri":"https://app.certless.io/auth/callback"}&code=...
 ```
 
-### Example
+It validates the target from `state.redirect_uri`, strips redirect-like target params, forwards configured OAuth callback params, and redirects with `303`.
 
-```
-https://oauth-redirect.dev.coda.to/?state={"redirect_uri":"https%3A//app.staging.coda.to/callback"}&code=abc123&scope=read
-```
+Configured target hosts:
 
-## Deployment
+- localhost, `*.localhost`, and loopback IPv4 for local development
+- `*.plansombl.com`
+- `*.ensombl.io`
+- `*.certless.io`
 
-### Prerequisites
+Wrangler config is generated from `config/auth.config.jsonc` into `apps/oauth-redirect-worker/.generated/wrangler.jsonc`. There is one Worker target: `oauth-redirect.dev.ensombl.io`. The `dev` label is part of the workflow hostname, not a separate Worker environment.
 
-- Node.js 18+
-- Wrangler CLI
+Worker package scripts run Wrangler with `CI=1` scoped to the Wrangler process. Wrangler `4.99.0` prompts interactive terminals to install Cloudflare agent skills before starting `wrangler dev`, and it does not expose a no-install flag; the scoped CI env keeps local and Turbo startup non-blocking while still using the latest Wrangler.
 
-### Commands
+`pnpm dev` also generates local Wrangler config with `AUTH_REDIRECT_ALLOW_INSECURE_CALLBACKS=true` so `http://localhost:8787` callbacks work. `pnpm build` and `pnpm --filter @ensombl/oauth-redirect-worker deploy` regenerate config without that var, so production still requires HTTPS callback traffic.
 
-```bash
-# Development
-pnpm run dev
+## Local Test
 
-# Deploy to production
-pnpm run deploy
+Create `.env` from the root example:
 
-# Run tests
-pnpm run test
+```sh
+cp .env.example .env
 ```
 
-## Configuration
+The defaults are enough for the local demo:
 
-The worker is configured via `wrangler.jsonc`:
+```sh
+PORT=3000
+TEST_SERVER_PORT=4000
+TEST_CLIENT_BASE_URL=http://localhost:3000
+AUTH_WORKER_BASE_URL=http://localhost:8787
+TEST_REDIRECT_URIS=http://localhost:8787/callback/test
+```
 
-- **Route**: `oauth-redirect.dev.coda.to/*`
-- **Name**: `oauth-redirect-dev`
-- **Compatibility Date**: `2025-06-07`
+Then run:
 
-## Security Features
+```sh
+pnpm install
+pnpm dev:demo
+```
 
-- **Allowlist Validation**: Only permits redirects to pre-approved domains
-- **Parameter Validation**: Validates the structure of the `state` parameter
-- **Error Handling**: Returns appropriate HTTP status codes for invalid requests
+Demo URLs:
 
-## Error Responses
+- Test client: `http://localhost:3000`
+- OAuth test server: `http://localhost:4000`
+- Redirect Worker: `http://localhost:8787`
 
-- `400 Bad Request`: Invalid or missing `state` parameter
-- `403 Forbidden`: Redirect target not in allowlist
+Open `http://localhost:3000` and sign in with the local OAuth test server.
 
-## Development
+To test post-login navigation, start at a relative `return_to` path:
 
-The worker is built with TypeScript and uses Vitest for testing. The main logic is contained in `src/index.ts`.
+```txt
+http://localhost:3000/auth/test?return_to=/dashboard?tab=home
+```
+
+The test client stores that value inside OAuth state, validates that it is a relative path, and redirects there after the callback with a local `login` handle. The Worker still strips redirect-like params from the callback URL itself.
+
+## Commands
+
+```sh
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm dev:worker
+pnpm dev:test-server
+pnpm dev:test-client
+pnpm dev:demo
+pnpm deploy
+pnpm cf-typegen
+```
+
+`pnpm deploy` generates Wrangler config first, then deploys the single Worker target.

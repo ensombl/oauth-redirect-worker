@@ -1,18 +1,26 @@
 {
-	"name": "external-auth-worker",
-	"version": "0.0.0",
-	"private": true,
-	"scripts": {
-		"deploy": "wrangler deploy",
-		"dev": "wrangler dev",
-		"start": "wrangler dev",
-		"test": "vitest",
-		"cf-typegen": "wrangler types"
-	},
-	"devDependencies": {
-		"@cloudflare/vitest-pool-workers": "^0.8.19",
-		"typescript": "^5.5.2",
-		"vitest": "~3.0.7",
-		"wrangler": "^4.19.1"
-	}
+  "name": "oauth-redirect",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.3.0",
+  "scripts": {
+    "build": "turbo run build",
+    "coverage": "turbo run coverage",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "dev": "turbo run dev",
+    "dev:worker": "pnpm --filter @ensombl/oauth-redirect-worker dev",
+    "dev:test-client": "pnpm --filter @ensombl/oauth-test-client dev",
+    "dev:test-server": "pnpm --filter @ensombl/oauth-test-server dev",
+    "dev:demo": "concurrently -k -n worker,server,client -c cyan,magenta,green \"pnpm dev:worker\" \"pnpm dev:test-server\" \"pnpm dev:test-client\"",
+    "deploy": "pnpm --filter @ensombl/oauth-redirect-worker deploy",
+    "cf-typegen": "pnpm --filter @ensombl/oauth-redirect-worker cf-typegen",
+    "generate:config": "pnpm --filter @ensombl/auth-config generate"
+  },
+  "devDependencies": {
+    "@vitest/coverage-istanbul": "4.1.8",
+    "concurrently": "^10.0.3",
+    "turbo": "^2.9.17",
+    "typescript": "^6.0.3"
+  }
 }

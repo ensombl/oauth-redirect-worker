@@ -1,0 +1,53 @@
+{
+  "worker": {
+    "name": "oauth-redirect",
+    "compatibilityDate": "2025-06-17",
+    "observability": true,
+    "hostnames": ["oauth-redirect.dev.ensombl.io"]
+  },
+  "redirects": {
+    "allowLocalhost": true,
+    "allowedHostPatterns": [
+      "*.plansombl.com",
+      "*.ensombl.io",
+      "*.certless.io"
+    ],
+    "forwardedCallbackParams": [
+      "code",
+      "state",
+      "scope",
+      "iss",
+      "session_state",
+      "error",
+      "error_description",
+      "error_uri"
+    ],
+    "stripTargetParams": [
+      "redirect",
+      "redirect_uri",
+      "return_to",
+      "returnTo",
+      "next",
+      "url",
+      "destination",
+      "continue",
+      "goto",
+      "target",
+      "forward",
+      "callback"
+    ],
+    "maxStateLength": 4096,
+    "maxFinalUrlLength": 4096
+  },
+  "providers": {
+    "test": {
+      "displayName": "Local OAuth Test Server",
+      "clientId": "test-client",
+      "clientSecret": "test-secret",
+      "authorizationEndpoint": "http://localhost:4000/oauth/authorize",
+      "tokenEndpoint": "http://localhost:4000/oauth/token",
+      "userInfoEndpoint": "http://localhost:4000/oauth/userinfo",
+      "scopes": ["openid", "email", "profile"]
+    }
+  }
+}

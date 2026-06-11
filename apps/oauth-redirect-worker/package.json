@@ -1,0 +1,26 @@
+{
+  "name": "@ensombl/oauth-redirect-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate:config": "pnpm --filter @ensombl/auth-config build && pnpm --filter @ensombl/auth-config generate",
+    "build": "pnpm generate:config && CI=1 wrangler deploy --config .generated/wrangler.jsonc --dry-run --outdir dist",
+    "deploy": "pnpm generate:config && CI=1 wrangler deploy --config .generated/wrangler.jsonc",
+    "dev": "AUTH_REDIRECT_ALLOW_INSECURE_CALLBACKS=true pnpm generate:config && CI=1 wrangler dev --config .generated/wrangler.jsonc",
+    "start": "pnpm dev",
+    "test": "pnpm generate:config && vitest run",
+    "coverage": "pnpm generate:config && vitest run --coverage",
+    "typecheck": "pnpm generate:config && tsc --noEmit -p tsconfig.json",
+    "cf-typegen": "pnpm generate:config && CI=1 wrangler types --config .generated/wrangler.jsonc"
+  },
+  "dependencies": {
+    "@ensombl/auth-config": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.16.14",
+    "typescript": "^6.0.3",
+    "vitest": "~4.1.8",
+    "wrangler": "4.99.0"
+  }
+}
